@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF 分割ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{
+  --bg:#0f0f0f;--sur:#171717;--bdr:#252525;--bdr2:#333;
+  --tx:#e8e8e8;--sub:#666;--mt:#3a3a3a;
+  --ok:#6fcf97;--ng:#eb5757;--wn:#f2c94c;
+  --mono:'DM Mono',monospace;--serif:'Cormorant Garamond',serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);min-height:100vh;}
+.shell{max-width:700px;margin:0 auto;padding:52px 22px 100px;}
+header{text-align:center;margin-bottom:46px;}
+.logo{font-family:var(--serif);font-size:48px;font-weight:300;letter-spacing:.1em;line-height:1;margin-bottom:8px;}
+.logo strong{font-weight:700;}
+.logo-sub{font-size:10px;letter-spacing:.3em;color:var(--sub);text-transform:uppercase;}
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;margin-bottom:12px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);}
+.cb{padding:24px;}
+.lbl{font-size:9px;letter-spacing:.26em;color:var(--sub);text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:9px;}
+.lbl::after{content:'';flex:1;height:1px;background:var(--bdr);}
+.mode-row{display:flex;gap:8px;margin-bottom:18px;}
+.mode-btn{flex:1;padding:9px;background:var(--bg);border:1px solid var(--bdr2);border-radius:2px;color:var(--sub);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;text-align:center;}
+.mode-btn.active{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.22);color:var(--tx);}
+.dz{border:1px solid var(--bdr2);border-radius:2px;padding:32px 20px;text-align:center;cursor:pointer;position:relative;transition:border-color .2s,background .2s;}
+.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz:hover,.dz.ov{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.015);}
+.dz-icon{width:42px;height:42px;border:1px solid var(--bdr2);border-radius:2px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--sub);background:var(--bg);}
+.dz-t1{font-family:var(--serif);font-size:17px;letter-spacing:.04em;margin-bottom:4px;}
+.dz-t2{font-size:11px;color:var(--sub);}
+.spin-row{display:none;align-items:center;gap:9px;padding:11px 13px;margin-top:10px;background:var(--bg);border:1px solid var(--bdr);border-radius:2px;font-size:11px;color:var(--sub);}
+.spin-row.show{display:flex;}
+.spinner{width:11px;height:11px;border:1.5px solid var(--bdr2);border-top-color:var(--tx);border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.fqueue{display:flex;flex-direction:column;gap:5px;margin-top:10px;}
+.fq-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:2px;}
+.fq-pdf{width:30px;height:34px;background:var(--sur);border:1px solid var(--bdr2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--sub);flex-shrink:0;}
+.fq-info{flex:1;min-width:0;}
+.fq-name{font-size:12px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fq-meta{font-size:10px;color:var(--sub);margin-top:2px;}
+.fq-st{font-size:10px;flex-shrink:0;}.fq-st.ok{color:var(--ok);}.fq-st.err{color:var(--ng);}.fq-st.ld{color:var(--sub);}
+.fq-rm{padding:2px 7px;background:transparent;border:1px solid var(--bdr);border-radius:2px;color:var(--sub);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;}
+.fq-rm:hover{border-color:var(--ng);color:var(--ng);}
+.stats-row{display:none;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.stats-row.show{display:grid;}
+.stat-cell{background:var(--bg);border:1px solid var(--bdr);border-radius:2px;padding:10px 12px;}
+.stat-l{font-size:9px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
+.stat-v{font-size:14px;color:var(--tx);font-weight:500;}
+.nprev{display:none;margin-top:10px;padding:9px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:2px;font-size:10px;color:var(--sub);}
+.nprev.show{display:block;}
+.ntags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.ntag{padding:2px 7px;border:1px solid var(--bdr2);border-radius:2px;color:var(--sub);font-size:10px;}
+.btn-main{width:100%;margin-top:16px;padding:14px;background:var(--tx);border:none;border-radius:2px;color:var(--bg);font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:.08em;cursor:pointer;transition:opacity .2s;}
+.btn-main:hover:not(:disabled){opacity:.86;}
+.btn-main:disabled{opacity:.2;cursor:not-allowed;}
+/* Progress */
+.prog-card{display:none;}.prog-card.show{display:block;}
+.pct-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:12px;}
+.pct-big{font-family:var(--serif);font-size:62px;font-weight:300;line-height:1;letter-spacing:-.02em;transition:color .5s;}
+.pct-big.done{color:var(--ok);}
+.pct-r{text-align:right;padding-bottom:6px;}
+.pct-lbl{font-size:11px;color:var(--sub);margin-bottom:3px;}
+.pct-pts{font-size:12px;color:var(--tx);}
+.segbar{width:100%;height:26px;display:flex;gap:2px;margin-bottom:7px;}
+.seg{flex:1;background:rgba(255,255,255,.05);border-radius:1px;position:relative;overflow:hidden;transition:background .3s;}
+.seg.act{background:rgba(255,255,255,.18);}
+.seg.act::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:sh 1s ease-in-out infinite;}
+@keyframes sh{0%,100%{opacity:0}50%{opacity:1}}
+.seg.done{background:var(--ok);}
+.seg-ft{display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-bottom:14px;}
+.done-bn{display:none;align-items:center;gap:14px;padding:16px 18px;margin-top:12px;background:rgba(111,207,151,.05);border:1px solid rgba(111,207,151,.18);border-radius:2px;}
+.done-bn.show{display:flex;}
+.done-ck{width:32px;height:32px;border:1px solid rgba(111,207,151,.35);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;animation:pop .4s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.done-t{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--ok);}
+.done-s{font-size:10px;color:var(--sub);margin-top:2px;}
+.logbox{background:var(--bg);border:1px solid var(--bdr);border-radius:2px;height:130px;overflow-y:auto;padding:10px 12px;font-size:11px;line-height:1.8;}
+.logbox::-webkit-scrollbar{width:3px;}
+.logbox::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
+.ll{display:flex;gap:8px;}.lt{color:var(--sub);flex-shrink:0;}.lm{color:var(--tx);}
+.lm.ok{color:var(--ok);}.lm.info{color:var(--sub);}.lm.err{color:var(--ng);}.lm.wn{color:var(--wn);}
+/* Parts */
+.parts-panel{display:none;}.parts-panel.show{display:block;}
+.toolbar{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
+.tb-l{display:flex;align-items:center;gap:7px;flex:1;}
+.cba{cursor:pointer;accent-color:var(--tx);width:13px;height:13px;}
+.cba-lbl{font-size:11px;color:var(--sub);}
+.sel-ct{font-size:11px;color:var(--sub);}
+.btn-dls{padding:6px 13px;background:transparent;border:1px solid var(--bdr2);border-radius:2px;color:var(--tx);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;}
+.btn-dls:hover{border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.025);}
+.btn-dls:disabled{opacity:.3;cursor:not-allowed;}
+.pgrid{display:flex;flex-direction:column;gap:5px;max-height:400px;overflow-y:auto;padding-right:3px;}
+.pgrid::-webkit-scrollbar{width:3px;}
+.pgrid::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
+.prow{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:2px;transition:border-color .15s;}
+.prow:hover{border-color:var(--bdr2);}
+.prow.sel{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.012);}
+.pcb{cursor:pointer;accent-color:var(--tx);width:13px;height:13px;flex-shrink:0;}
+.pnum{font-size:10px;color:var(--sub);width:20px;text-align:right;flex-shrink:0;}
+.pthumb{width:32px;height:40px;background:var(--sur);border:1px solid var(--bdr);border-radius:1px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;font-size:9px;color:var(--sub);}
+.pthumb canvas{width:32px;height:40px;object-fit:contain;display:block;}
+.pspin{animation:blink 1s ease infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.pinfo{flex:1;min-width:0;}
+.pname{font-size:12px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pmeta{font-size:10px;color:var(--sub);margin-top:2px;}
+.pacts{display:flex;gap:4px;flex-shrink:0;}
+.ba{padding:3px 8px;border:1px solid var(--bdr);border-radius:2px;background:transparent;color:var(--sub);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.ba:hover{border-color:var(--bdr2);color:var(--tx);}
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.9);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;width:100%;max-width:640px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.8);}
+.mhead{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--bdr);flex-shrink:0;}
+.mtitle{font-size:11px;color:var(--sub);}
+.mclose{padding:3px 8px;background:transparent;border:1px solid var(--bdr2);border-radius:2px;color:var(--sub);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;}
+.mclose:hover{color:var(--ng);border-color:var(--ng);}
+.mbody{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;align-items:center;}
+.mbody::-webkit-scrollbar{width:3px;}
+.mbody::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
+.prev-cv{max-width:100%;border:1px solid var(--bdr);background:#fff;}
+.prev-nav{display:flex;align-items:center;gap:9px;margin-top:11px;font-size:11px;color:var(--sub);}
+.prev-nav button{padding:4px 10px;background:transparent;border:1px solid var(--bdr2);border-radius:2px;color:var(--sub);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;}
+.prev-nav button:hover{border-color:rgba(255,255,255,.28);color:var(--tx);}
+.prev-nav button:disabled{opacity:.3;cursor:not-allowed;}
+.pmrow{width:100%;display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;font-size:10px;}
+.pmrow span{padding:2px 7px;border:1px solid var(--bdr);border-radius:2px;color:var(--sub);}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="logo">PDF <strong>Splitter</strong></div>
+    <div class="logo-sub">200 MB 以下に分割 · 結合→分割対応 · ローカル処理</div>
+  </header>
+
+  <div class="card">
+    <div class="cb">
+      <div class="lbl">モード選択</div>
+      <div class="mode-row">
+        <button class="mode-btn active" id="modeSplit">分割のみ</button>
+        <button class="mode-btn" id="modeMerge">複数PDFを結合してから分割</button>
+      </div>
+      <div class="lbl" id="dzLabel">PDFファイルを選択</div>
+      <div class="dz" id="dz">
+        <input type="file" id="fi" accept=".pdf,application/pdf">
+        <div class="dz-icon">PDF</div>
+        <div class="dz-t1" id="dzT1">ドロップ、またはクリックして選択</div>
+        <div class="dz-t2" id="dzT2">PDFファイルのみ · ブラウザ内処理</div>
+      </div>
+      <div class="spin-row" id="spinRow">
+        <div class="spinner"></div>
+        <span id="spinMsg">読み込み中...</span>
+      </div>
+      <div class="fqueue" id="fqueue"></div>
+      <div class="stats-row" id="statsRow">
+        <div class="stat-cell"><div class="stat-l">総ページ数</div><div class="stat-v" id="statPages">—</div></div>
+        <div class="stat-cell"><div class="stat-l">合計サイズ</div><div class="stat-v" id="statSize">—</div></div>
+        <div class="stat-cell"><div class="stat-l">分割数（予測）</div><div class="stat-v" id="statParts">—</div></div>
+      </div>
+      <div class="nprev" id="nprev">
+        <span>出力ファイル名プレビュー</span>
+        <div class="ntags" id="ntags"></div>
+      </div>
+      <button class="btn-main" id="goBtn" disabled>200 MB 以下に分割する</button>
+    </div>
+  </div>
+
+  <div class="card prog-card" id="progCard">
+    <div class="cb">
+      <div class="lbl">進行状況</div>
+      <div class="pct-row">
+        <div class="pct-big" id="pctBig">0<span style="font-size:.42em;opacity:.4;">%</span></div>
+        <div class="pct-r">
+          <div class="pct-lbl" id="pctLbl">処理中...</div>
+          <div class="pct-pts" id="pctPts">— / —</div>
+        </div>
+      </div>
+      <div class="segbar" id="segbar"></div>
+      <div class="seg-ft"><span id="segL">—</span><span id="segR">経過: 0s</span></div>
+      <div class="done-bn" id="doneBn">
+        <div class="done-ck">✓</div>
+        <div><div class="done-t">分割完了</div><div class="done-s" id="doneS">—</div></div>
+      </div>
+      <div class="lbl" style="margin-top:18px;">処理ログ</div>
+      <div class="logbox" id="logbox">
+        <div class="ll"><span class="lt">--:--:--</span><span class="lm info">PDF Splitter 起動完了。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card parts-panel" id="partsPanel">
+    <div class="cb">
+      <div class="lbl">分割済みパーツ</div>
+      <div class="toolbar">
+        <div class="tb-l">
+          <input type="checkbox" class="cba" id="cbAll">
+          <label class="cba-lbl" for="cbAll">すべて選択</label>
+          <span class="sel-ct" id="selCt">0 件</span>
+        </div>
+        <button class="btn-dls" id="btnDls" disabled>↓ 選択をダウンロード</button>
+      </div>
+      <div class="pgrid" id="pgrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="mhead">
+      <span class="mtitle" id="mTitle">プレビュー</span>
+      <button class="mclose" id="mClose">✕ 閉じる</button>
+    </div>
+    <div class="mbody" id="mbody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ────────────────────────────────────────────
+   STRATEGY: avoid save() per page.
+
+   Instead we use a two-phase approach:
+   Phase 1 – BATCH BINARY SEARCH
+     Build a single merged pdfLibDoc.
+     Estimate a page-count target per part from raw file bytes / 200MB.
+     For each candidate split point, run ONE save() to verify the real size.
+     If over → binary-search fewer pages; if under → push more pages.
+     This reduces save() calls from O(pages) to O(parts × log(pages)).
+
+   Phase 2 – FINAL SAVE PER PART
+     Once page boundaries are confirmed, assemble and save each part once.
+   ──────────────────────────────────────────── */
+
+const LIMIT = 200 * 1024 * 1024; // 200 MiB
+
+const $ = id => document.getElementById(id);
+
+let mode = 'split';
+let queue = [];   // {name, bytes:Uint8Array, pages, size, ok, loading, error}
+let chunks = [];  // output
+let busy = false;
+let t0 = null, ticker = null;
+
+const dz=$('dz'),fi=$('fi'),spinRow=$('spinRow'),spinMsg=$('spinMsg');
+const fqueue=$('fqueue'),statsRow=$('statsRow'),statPages=$('statPages'),statSize=$('statSize'),statParts=$('statParts');
+const nprev=$('nprev'),ntags=$('ntags'),goBtn=$('goBtn');
+const progCard=$('progCard'),pctBig=$('pctBig'),pctLbl=$('pctLbl'),pctPts=$('pctPts');
+const segbar=$('segbar'),segL=$('segL'),segR=$('segR');
+const doneBn=$('doneBn'),doneS=$('doneS'),logbox=$('logbox');
+const partsPanel=$('partsPanel'),pgrid=$('pgrid');
+const cbAll=$('cbAll'),selCt=$('selCt'),btnDls=$('btnDls');
+const modalBg=$('modalBg'),mTitle=$('mTitle'),mbody=$('mbody'),mClose=$('mClose');
+
+/* ── utils ── */
+function fmt(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';if(b<1073741824)return (b/1048576).toFixed(1)+' MB';return (b/1073741824).toFixed(2)+' GB';}
+function fmtT(ms){const s=Math.floor(ms/1000),m=Math.floor(s/60);return m>0?m+'m '+(s%60)+'s':s+'s';}
+function ts(){return new Date().toLocaleTimeString('ja-JP',{hour12:false});}
+function pad(n,w){return String(n).padStart(w,'0');}
+function yield_(){return new Promise(r=>setTimeout(r,0));}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function pctHtml(n){return n+'<span style="font-size:.42em;opacity:.4;">%</span>';}
+
+function log(msg,cls){
+  const d=document.createElement('div');d.className='ll';
+  d.innerHTML='<span class="lt">'+ts()+'</span><span class="lm '+(cls||'')+'">'+msg+'</span>';
+  logbox.appendChild(d);logbox.scrollTop=logbox.scrollHeight;
+}
+
+function makePartName(base,num,digits){
+  const dot=base.lastIndexOf('.');
+  if(dot<=0)return base+'_'+pad(num,digits);
+  return base.slice(0,dot)+'_'+pad(num,digits)+base.slice(dot);
+}
+
+/* ── Mode toggle ── */
+$('modeSplit').addEventListener('click',()=>setMode('split'));
+$('modeMerge').addEventListener('click',()=>setMode('merge'));
+function setMode(m){
+  mode=m;
+  $('modeSplit').classList.toggle('active',m==='split');
+  $('modeMerge').classList.toggle('active',m==='merge');
+  fi.multiple=(m==='merge');
+  $('dzT1').textContent=m==='merge'?'複数のPDFをドロップ、またはクリックして選択':'ドロップ、またはクリックして選択';
+  $('dzT2').textContent=m==='merge'?'複数ファイル選択可 · 上から順に結合':'PDFファイルのみ · ブラウザ内処理';
+  goBtn.textContent=m==='merge'?'結合してから 200 MB 以下に分割する':'200 MB 以下に分割する';
+  queue=[];renderQueue();updateStats();
+}
+
+/* ── File input ── */
+fi.addEventListener('change',e=>{
+  const files=Array.from(e.target.files||[]);
+  fi.value='';
+  if(files.length) handleFiles(files);
+});
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('ov');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('ov'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('ov');
+  const files=Array.from(e.dataTransfer.files||[]).filter(f=>f.name.toLowerCase().endsWith('.pdf'));
+  if(files.length)handleFiles(files);
+  else log('PDFファイルのみ対応しています','err');
+});
+
+async function handleFiles(files){
+  if(mode==='split'){queue=[];await loadOne(files[0]);}
+  else{for(const f of files)await loadOne(f);}
+}
+
+async function loadOne(file){
+  if(!file.name.toLowerCase().endsWith('.pdf')){log(file.name+' はPDFではありません','err');return;}
+  const entry={name:file.name,bytes:null,pages:0,size:file.size,ok:false,loading:true};
+  if(mode==='split')queue=[entry];else queue.push(entry);
+  renderQueue();
+  spinMsg.textContent=file.name+' を読み込み中...';
+  spinRow.classList.add('show');
+  goBtn.disabled=true;
+  await yield_();
+  try{
+    const ab=await file.arrayBuffer();
+    const u8=new Uint8Array(ab);
+    if(!(u8[0]===0x25&&u8[1]===0x50&&u8[2]===0x44&&u8[3]===0x46))throw new Error('有効なPDFではありません');
+    // Use pdf-lib only to count pages (fast, no full parse needed beyond structure)
+    const doc=await PDFLib.PDFDocument.load(ab,{updateMetadata:false,parseSpeed:PDFLib.ParseSpeeds?.Fastest});
+    entry.bytes=u8;entry.pages=doc.getPageCount();entry.ok=true;entry.loading=false;
+    log(file.name+': '+entry.pages+'p · '+fmt(file.size),'ok');
+  }catch(e){
+    entry.ok=false;entry.loading=false;entry.error=e.message;
+    log(file.name+' エラー: '+e.message,'err');
+  }
+  spinRow.classList.remove('show');
+  renderQueue();updateStats();
+}
+
+function renderQueue(){
+  fqueue.innerHTML='';
+  queue.forEach((e,i)=>{
+    const row=document.createElement('div');row.className='fq-row';
+    row.innerHTML='<div class="fq-pdf">PDF</div>'
+      +'<div class="fq-info"><div class="fq-name">'+esc(e.name)+'</div>'
+      +'<div class="fq-meta">'+fmt(e.size)+(e.ok?' · '+e.pages+'p':'')+'</div></div>'
+      +'<span class="fq-st '+(e.loading?'ld':e.ok?'ok':'err')+'">'+(e.loading?'読込中':e.ok?'✓':e.error||'エラー')+'</span>'
+      +(mode==='merge'?'<button class="fq-rm" data-i="'+i+'">✕</button>':'');
+    fqueue.appendChild(row);
+  });
+  fqueue.querySelectorAll('.fq-rm').forEach(btn=>btn.addEventListener('click',e=>{
+    const i=+e.currentTarget.dataset.i;queue.splice(i,1);renderQueue();updateStats();
+  }));
+}
+
+function updateStats(){
+  const ready=queue.filter(e=>e.ok);
+  if(!ready.length){statsRow.classList.remove('show');nprev.classList.remove('show');goBtn.disabled=true;return;}
+  const totalP=ready.reduce((s,e)=>s+e.pages,0);
+  const totalB=ready.reduce((s,e)=>s+e.bytes.byteLength,0);
+  const estParts=Math.max(1,Math.ceil(totalB/LIMIT));
+  statPages.textContent=totalP+' p';statSize.textContent=fmt(totalB);statParts.textContent='約 '+estParts+' 個';
+  statsRow.classList.add('show');
+  const base=mode==='merge'?'merged_output.pdf':(ready[0].name);
+  const digits=String(estParts+1).length;
+  ntags.innerHTML='';
+  const show=Math.min(estParts,4);
+  for(let i=1;i<=show;i++){const s=document.createElement('span');s.className='ntag';s.textContent=makePartName(base,i,digits);ntags.appendChild(s);}
+  if(estParts>4){const s=document.createElement('span');s.className='ntag';s.textContent='…';ntags.appendChild(s);}
+  nprev.classList.add('show');
+  goBtn.disabled=busy;
+}
+
+/* ── Segbar ── */
+function buildSegbar(n){
+  segbar.innerHTML='';
+  const c=Math.min(n,50);segbar._t=n;segbar._c=c;
+  for(let i=0;i<c;i++){const s=document.createElement('div');s.className='seg';segbar.appendChild(s);}
+}
+function si(pi){return Math.floor(pi/Math.max(segbar._t,1)*segbar._c);}
+function segAct(pi){const ss=segbar.querySelectorAll('.seg');ss.forEach(s=>s.classList.remove('act'));if(ss[si(pi)])ss[si(pi)].classList.add('act');}
+function segDone(pi){const ss=segbar.querySelectorAll('.seg');if(ss[si(pi)]){ss[si(pi)].classList.remove('act');ss[si(pi)].classList.add('done');}}
+function segAllDone(){segbar.querySelectorAll('.seg').forEach(s=>{s.classList.remove('act');s.classList.add('done');});}
+
+/* ════════════════════════════════════════════
+   CORE SPLIT ALGORITHM  (fast, save()-efficient)
+
+   Key insight: pdf-lib's save() is slow because it serializes everything.
+   We call it as few times as possible:
+     1. Once per part to find the true boundary (binary search = O(log N) saves per part)
+     2. Once per part for the final output save
+   For a 1000-page PDF split into 5 parts that's ~5×(log2(200)+1) ≈ 45 saves total
+   instead of 1000.
+
+   Binary search for each part:
+     lo = 1, hi = remaining pages
+     mid = (lo+hi)/2
+     copyPages(src, [cursor..cursor+mid-1]) → tmpDoc → save()
+     if size < LIMIT  → lo = mid+1, best = mid
+     if size >= LIMIT → hi = mid-1
+     repeat until lo > hi
+     flush best (already computed)
+   ════════════════════════════════════════════ */
+
+async function doSplit(){
+  if(busy)return;
+  const ready=queue.filter(e=>e.ok);
+  if(!ready.length)return;
+
+  busy=true;goBtn.disabled=true;fi.disabled=true;chunks=[];
+  progCard.classList.add('show');doneBn.classList.remove('show');
+  partsPanel.classList.remove('show');pctBig.classList.remove('done');
+  pctBig.innerHTML=pctHtml(0);
+
+  t0=Date.now();
+  ticker=setInterval(()=>{segR.textContent='経過: '+fmtT(Date.now()-t0);},400);
+
+  try{
+    /* ── Step 1: build source document ── */
+    pctLbl.textContent='PDFを解析中...';pctPts.textContent='';
+    await yield_();
+    log('━━━ 開始 ━━━','info');
+
+    let srcDoc;
+    let totalPages=0;
+    const baseName=mode==='merge'?'merged_output.pdf':ready[0].name;
+
+    if(mode==='merge'&&ready.length>1){
+      log('結合: '+ready.length+' ファイル','info');
+      srcDoc=await PDFLib.PDFDocument.create();
+      for(const entry of ready){
+        pctLbl.textContent=entry.name+' を結合中...';
+        await yield_();
+        const sub=await PDFLib.PDFDocument.load(entry.bytes.buffer,{updateMetadata:false});
+        const idxs=Array.from({length:sub.getPageCount()},(_,i)=>i);
+        const copied=await srcDoc.copyPages(sub,idxs);
+        copied.forEach(p=>srcDoc.addPage(p));
+        log('結合: '+entry.name+' ('+entry.pages+'p)','info');
+      }
+      totalPages=srcDoc.getPageCount();
+      log('結合完了: 計'+totalPages+'p','ok');
+    }else{
+      srcDoc=await PDFLib.PDFDocument.load(ready[0].bytes.buffer,{updateMetadata:false});
+      totalPages=srcDoc.getPageCount();
+      log(ready[0].name+': '+totalPages+'p','info');
+    }
+
+    const totalRawBytes=ready.reduce((s,e)=>s+e.bytes.byteLength,0);
+    const estParts=Math.max(1,Math.ceil(totalRawBytes/LIMIT));
+    buildSegbar(estParts+2);
+    pctLbl.textContent='分割中...';
+
+    /* ── Step 2: binary-search split ── */
+    let cursor=0;       // next 0-based page index to process
+    let partNum=0;
+
+    // Helper: build a doc from srcDoc pages [from, from+count) and save it
+    // Returns {doc, savedBytes}
+    async function trySlice(from,count){
+      const tmp=await PDFLib.PDFDocument.create();
+      const idxs=Array.from({length:count},(_,i)=>from+i);
+      const pgs=await tmp.copyPages(srcDoc,idxs);
+      pgs.forEach(p=>tmp.addPage(p));
+      await yield_();
+      const bytes=await tmp.save({addDefaultPage:false});
+      return{doc:tmp,bytes};
+    }
+
+    while(cursor<totalPages){
+      const remaining=totalPages-cursor;
+      partNum++;
+      segAct(partNum-1);
+
+      // Estimate initial hi based on raw bytes ratio
+      const rawBytesLeft=totalRawBytes*(remaining/totalPages);
+      const estPages=Math.min(remaining,Math.max(1,Math.floor(remaining*(LIMIT/rawBytesLeft))));
+
+      // Edge case: single page remaining
+      if(remaining===1){
+        const{bytes}=await trySlice(cursor,1);
+        const blob=new Blob([bytes],{type:'application/pdf'});
+        if(bytes.byteLength>=LIMIT)log('⚠ p.'+(cursor+1)+' 単体 '+fmt(bytes.byteLength)+' — 1ページが200MB超','wn');
+        chunks.push({blob,bytes,pgStart:cursor+1,pgEnd:cursor+1,name:''});
+        segDone(partNum-1);
+        log('パーツ'+partNum+': p.'+(cursor+1)+' (1p · '+fmt(blob.size)+')','ok');
+        cursor++;
+        pctBig.innerHTML=pctHtml(100);
+        break;
+      }
+
+      /* Binary search for the maximum page count that fits in LIMIT */
+      let lo=1, hi=Math.min(remaining, estPages*2); // generous hi
+      let bestCount=0, bestBytes=null;
+
+      // First, try hi directly — often it fits and we skip the search
+      {
+        const{bytes:b}=await trySlice(cursor,hi);
+        if(b.byteLength<LIMIT){
+          // hi fits — if that's all remaining pages, done
+          if(hi===remaining){
+            bestCount=hi;bestBytes=b;lo=hi+1;// exit loop
+          }else{
+            // Try to push hi further (maybe we can fit more)
+            // Double and clamp to remaining
+            const hi2=Math.min(remaining,hi*2);
+            if(hi2>hi){
+              const{bytes:b2}=await trySlice(cursor,hi2);
+              if(b2.byteLength<LIMIT){bestCount=hi2;bestBytes=b2;hi=hi2;}
+              else{bestCount=hi;bestBytes=b;hi=hi2;}
+            }else{bestCount=hi;bestBytes=b;}
+            lo=bestCount+1; // binary search from bestCount+1 upward? No: we have a good bestCount; do descending search
+            // Actually do standard binary search: lo=bestCount+1 hi=remaining
+            lo=bestCount+1;hi=remaining;
+          }
+        }else{
+          // hi is already over: search downward
+          bestCount=0;bestBytes=null;
+          lo=1;hi=hi-1;
+        }
+      }
+
+      // Binary search in [lo, hi]
+      while(lo<=hi){
+        const mid=Math.floor((lo+hi)/2);
+        pctLbl.textContent='パーツ '+partNum+': '+mid+'p をテスト中...';
+        await yield_();
+        const{bytes:b}=await trySlice(cursor,mid);
+        if(b.byteLength<LIMIT){
+          if(mid>bestCount){bestCount=mid;bestBytes=b;}
+          lo=mid+1;
+        }else{
+          hi=mid-1;
+        }
+      }
+
+      // bestCount=0 means even 1 page exceeds limit
+      if(bestCount===0){
+        // Accept 1 page with warning
+        const{bytes:b}=await trySlice(cursor,1);
+        bestCount=1;bestBytes=b;
+        log('⚠ p.'+(cursor+1)+' 単体 '+fmt(b.byteLength)+' — 1ページが200MB超（分割不能）','wn');
+      }
+
+      const blob=new Blob([bestBytes],{type:'application/pdf'});
+      chunks.push({blob,bytes:bestBytes,pgStart:cursor+1,pgEnd:cursor+bestCount,name:''});
+      segDone(partNum-1);
+      log('パーツ'+partNum+': p.'+(cursor+1)+'–'+(cursor+bestCount)+' ('+bestCount+'p · '+fmt(blob.size)+')','ok');
+
+      cursor+=bestCount;
+      const pct=Math.round(cursor/totalPages*100);
+      pctBig.innerHTML=pctHtml(pct);
+      pctPts.textContent=cursor+' / '+totalPages+' ページ完了';
+      segL.textContent=partNum+' パーツ生成済';
+      await yield_();
+    }
+
+    /* Rename with final digit width */
+    const digits=String(chunks.length).length;
+    chunks.forEach((c,i)=>{c.name=makePartName(baseName,i+1,digits);});
+
+  }catch(e){
+    log('エラー: '+e.message,'err');
+    console.error(e);
+  }
+
+  /* ── Finalise ── */
+  clearInterval(ticker);
+  const elapsed=fmtT(Date.now()-t0);
+  pctBig.innerHTML=pctHtml(100);pctBig.classList.add('done');
+  pctLbl.textContent='完了';
+  pctPts.textContent=chunks.reduce((s,c)=>s+(c.pgEnd-c.pgStart+1),0)+' ページ完了';
+  segAllDone();
+  doneBn.classList.add('show');
+  doneS.textContent=chunks.length+' パーツ · '+elapsed;
+  log('━━━ 完了: '+chunks.length+' パーツ ('+elapsed+') ━━━','ok');
+
+  const over=chunks.filter(c=>c.blob.size>=LIMIT);
+  if(over.length===0)log('✓ 全パーツ 200 MB 未満','ok');
+  else over.forEach(c=>log('⚠ '+c.name+': '+fmt(c.blob.size)+' （1ページが超大）','wn'));
+
+  renderParts();
+  partsPanel.classList.add('show');
+  partsPanel.scrollIntoView({behavior:'smooth',block:'start'});
+  busy=false;goBtn.disabled=false;fi.disabled=false;
+}
+goBtn.addEventListener('click',doSplit);
+
+/* ── Parts render ── */
+function renderParts(){
+  pgrid.innerHTML='';
+  chunks.forEach((c,i)=>{
+    const row=document.createElement('div');row.className='prow';
+    const cb=document.createElement('input');cb.type='checkbox';cb.className='pcb';cb.dataset.i=i;
+    const num=document.createElement('div');num.className='pnum';num.textContent=i+1;
+    const th=document.createElement('div');th.className='pthumb';th.innerHTML='<span class="pspin">…</span>';
+    const pgc=c.pgEnd-c.pgStart+1;
+    const info=document.createElement('div');info.className='pinfo';
+    info.innerHTML='<div class="pname">'+esc(c.name)+'</div>'
+      +'<div class="pmeta">p.'+c.pgStart+'–'+c.pgEnd+' · '+pgc+'p · '+fmt(c.blob.size)+'</div>';
+    const acts=document.createElement('div');acts.className='pacts';
+    const pb=document.createElement('button');pb.className='ba';pb.textContent='プレビュー';
+    const db=document.createElement('button');db.className='ba';db.textContent='↓ DL';
+    acts.appendChild(pb);acts.appendChild(db);
+    [cb,num,th,info,acts].forEach(el=>row.appendChild(el));
+    cb.addEventListener('change',updateSel);
+    db.addEventListener('click',()=>triggerDL(c.blob,c.name));
+    pb.addEventListener('click',()=>openPreview(i));
+    pgrid.appendChild(row);
+    renderThumb(c,th);
+  });
+  cbAll.checked=false;updateSel();
+}
+
+async function renderThumb(c,container){
+  try{
+    const d=await pdfjsLib.getDocument({data:c.bytes.slice(0)}).promise;
+    const p=await d.getPage(1);
+    const vp=p.getViewport({scale:0.12});
+    const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+    await p.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    container.innerHTML='';container.appendChild(cv);
+  }catch{container.innerHTML='PDF';}
+}
+
+function updateSel(){
+  const cbs=Array.from(pgrid.querySelectorAll('.pcb'));
+  const n=cbs.filter(c=>c.checked).length;
+  cbs.forEach(cb=>cb.closest('.prow').classList.toggle('sel',cb.checked));
+  selCt.textContent=n+' 件';btnDls.disabled=(n===0);
+  cbAll.checked=(n===cbs.length&&n>0);cbAll.indeterminate=(n>0&&n<cbs.length);
+}
+cbAll.addEventListener('change',()=>{pgrid.querySelectorAll('.pcb').forEach(cb=>{cb.checked=cbAll.checked;});updateSel();});
+btnDls.addEventListener('click',async()=>{
+  const sel=Array.from(pgrid.querySelectorAll('.pcb')).map((cb,i)=>cb.checked?i:-1).filter(i=>i>=0);
+  btnDls.disabled=true;
+  for(const i of sel){triggerDL(chunks[i].blob,chunks[i].name);await new Promise(r=>setTimeout(r,250));}
+  btnDls.disabled=false;
+});
+function triggerDL(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+/* ── Preview ── */
+let pvIdx=-1,pvPage=1,pvMax=1,pvDoc=null;
+async function openPreview(idx){
+  const c=chunks[idx];pvIdx=idx;pvPage=1;pvMax=c.pgEnd-c.pgStart+1;
+  mTitle.textContent=c.name+' ('+pvMax+'p)';
+  mbody.innerHTML='<div style="color:#555;font-size:12px;padding:20px;">レンダリング中...</div>';
+  modalBg.classList.add('show');
+  try{pvDoc=await pdfjsLib.getDocument({data:c.bytes.slice(0)}).promise;await renderPv();}
+  catch(e){mbody.innerHTML='<div style="color:var(--ng);font-size:12px;padding:20px;">エラー: '+esc(e.message)+'</div>';}
+}
+async function renderPv(){
+  const c=chunks[pvIdx];
+  mbody.innerHTML='<div class="pmrow"><span>'+esc(c.name)+'</span><span>'+fmt(c.blob.size)+'</span><span>p.'+c.pgStart+'–'+c.pgEnd+'</span></div>'
+    +'<div style="color:#555;font-size:12px;">レンダリング中...</div>';
+  const pg=await pvDoc.getPage(pvPage);
+  const sc=Math.min(560/pg.getViewport({scale:1}).width,2.2);
+  const vp=pg.getViewport({scale:sc});
+  const cv=document.createElement('canvas');cv.className='prev-cv';cv.width=vp.width;cv.height=vp.height;
+  await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+  mbody.querySelector('div:last-child').remove();mbody.appendChild(cv);
+  if(pvMax>1){
+    const nav=document.createElement('div');nav.className='prev-nav';
+    const prev=document.createElement('button');prev.textContent='← 前';prev.disabled=(pvPage===1);
+    const info=document.createElement('span');info.textContent=pvPage+' / '+pvMax;
+    const next=document.createElement('button');next.textContent='次 →';next.disabled=(pvPage===pvMax);
+    prev.addEventListener('click',async()=>{if(pvPage>1){pvPage--;await renderPv();}});
+    next.addEventListener('click',async()=>{if(pvPage<pvMax){pvPage++;await renderPv();}});
+    nav.append(prev,info,next);mbody.appendChild(nav);
+  }
+}
+mClose.addEventListener('click',closeModal);
+modalBg.addEventListener('click',e=>{if(e.target===modalBg)closeModal();});
+function closeModal(){pvDoc=null;modalBg.classList.remove('show');mbody.innerHTML='';}
+
+})();
+</script>
+</body>
+</html>
