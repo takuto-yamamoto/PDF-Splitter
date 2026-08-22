@@ -83,6 +83,10 @@ header{text-align:center;margin-bottom:46px;}
 .fixed-action{position:fixed;left:0;right:0;bottom:0;z-index:100;background:rgba(247,247,244,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--bdr);box-shadow:0 -6px 18px rgba(20,20,15,.06);}
 .fixed-action-inner{max-width:700px;margin:0 auto;padding:12px 22px;}
 .fixed-action .btn-main{margin-top:0;}
+.fixed-action .btn-dls-fixed{width:100%;margin-top:8px;padding:14px;background:var(--tx);border:1px solid var(--tx);border-radius:2px;color:var(--bg);font-family:var(--serif);font-size:15px;font-weight:600;letter-spacing:.06em;cursor:pointer;transition:opacity .2s;display:none;}
+.fixed-action .btn-dls-fixed.show{display:block;}
+.fixed-action .btn-dls-fixed:hover:not(:disabled){opacity:.86;}
+.fixed-action .btn-dls-fixed:disabled{opacity:.2;cursor:not-allowed;}
 /* Progress */
 .prog-card{display:none;}.prog-card.show{display:block;}
 .pct-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:12px;}
@@ -267,6 +271,7 @@ header{text-align:center;margin-bottom:46px;}
 <div class="fixed-action" id="fixedAction">
   <div class="fixed-action-inner">
     <button class="btn-main" id="goBtn" disabled>結合してから 200 MB 以下に分割する</button>
+    <button class="btn-dls-fixed" id="btnDlsFixed" disabled>↓ 選択をダウンロード</button>
   </div>
 </div>
 
@@ -324,7 +329,7 @@ miniProg.addEventListener('click',()=>progCard.scrollIntoView({behavior:'smooth'
 const segbar=$('segbar'),segL=$('segL'),segR=$('segR');
 const doneBn=$('doneBn'),doneS=$('doneS'),logbox=$('logbox');
 const partsPanel=$('partsPanel'),pgrid=$('pgrid');
-const cbAll=$('cbAll'),selCt=$('selCt'),btnDls=$('btnDls');
+const cbAll=$('cbAll'),selCt=$('selCt'),btnDls=$('btnDls'),btnDlsFixed=$('btnDlsFixed');
 const modalBg=$('modalBg'),mTitle=$('mTitle'),mbody=$('mbody'),mClose=$('mClose');
 
 /* ── utils ── */
@@ -541,7 +546,7 @@ async function doSplit(){
 
   busy=true;goBtn.disabled=true;fi.disabled=true;chunks=[];
   progCard.classList.add('show');doneBn.classList.remove('show');
-  partsPanel.classList.remove('show');
+  partsPanel.classList.remove('show');btnDlsFixed.classList.remove('show');
   miniProg.classList.add('show');
   setPct(0,false);
 
@@ -742,7 +747,7 @@ async function doSplit(){
 
   renderParts();
   partsPanel.classList.add('show');
-  partsPanel.scrollIntoView({behavior:'smooth',block:'start'});
+  btnDlsFixed.classList.add('show');
   busy=false;goBtn.disabled=false;fi.disabled=false;
 }
 goBtn.addEventListener('click',doSplit);
@@ -797,16 +802,18 @@ function updateSel(){
   const cbs=Array.from(pgrid.querySelectorAll('.pcb'));
   const n=cbs.filter(c=>c.checked).length;
   cbs.forEach(cb=>cb.closest('.prow').classList.toggle('sel',cb.checked));
-  selCt.textContent=n+' 件';btnDls.disabled=(n===0);
+  selCt.textContent=n+' 件';btnDls.disabled=(n===0);btnDlsFixed.disabled=(n===0);
   cbAll.checked=(n===cbs.length&&n>0);cbAll.indeterminate=(n>0&&n<cbs.length);
 }
 cbAll.addEventListener('change',()=>{pgrid.querySelectorAll('.pcb').forEach(cb=>{cb.checked=cbAll.checked;});updateSel();});
-btnDls.addEventListener('click',async()=>{
+async function downloadSelected(){
   const sel=Array.from(pgrid.querySelectorAll('.pcb')).map((cb,i)=>cb.checked?i:-1).filter(i=>i>=0);
-  btnDls.disabled=true;
+  btnDls.disabled=true;btnDlsFixed.disabled=true;
   for(const i of sel){triggerDL(chunks[i].blob,chunks[i].name);await new Promise(r=>setTimeout(r,250));}
-  btnDls.disabled=false;
-});
+  btnDls.disabled=false;btnDlsFixed.disabled=false;
+}
+btnDls.addEventListener('click',downloadSelected);
+btnDlsFixed.addEventListener('click',downloadSelected);
 function triggerDL(blob,name){
   const safeName=/\.pdf$/i.test(name.trim())?name.trim():(name.trim()||'output')+'.pdf';
   const url=URL.createObjectURL(blob);
