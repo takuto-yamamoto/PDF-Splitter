@@ -17,8 +17,16 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--tx);font-family:var(--mono);min-height:100vh;}
-.shell{max-width:700px;margin:0 auto;padding:52px 22px 100px;}
+.shell{max-width:700px;margin:0 auto;padding:52px 22px 110px;}
 header{text-align:center;margin-bottom:46px;}
+.mini-prog{display:none;position:sticky;top:14px;z-index:90;background:var(--sur);border:1px solid var(--bdr2);border-radius:3px;padding:11px 14px;margin-bottom:18px;cursor:pointer;box-shadow:0 6px 20px rgba(20,20,15,.08);}
+.mini-prog.show{display:block;}
+.mini-prog-top{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:7px;gap:10px;}
+.mini-prog-top span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mini-prog-pct{font-family:var(--serif);font-size:15px;color:var(--tx);font-weight:600;flex-shrink:0;}
+.mini-prog-bar{width:100%;height:5px;background:rgba(0,0,0,.07);border-radius:3px;overflow:hidden;}
+.mini-prog-fill{height:100%;width:0%;background:var(--tx);border-radius:3px;transition:width .3s ease;}
+.mini-prog-fill.done{background:var(--ok);}
 .logo{font-family:var(--serif);font-size:48px;font-weight:300;letter-spacing:.1em;line-height:1;margin-bottom:8px;}
 .logo strong{font-weight:700;}
 .logo-sub{font-size:10px;letter-spacing:.3em;color:var(--sub);text-transform:uppercase;}
@@ -72,6 +80,9 @@ header{text-align:center;margin-bottom:46px;}
 .btn-main{width:100%;margin-top:16px;padding:14px;background:var(--tx);border:none;border-radius:2px;color:var(--bg);font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:.08em;cursor:pointer;transition:opacity .2s;}
 .btn-main:hover:not(:disabled){opacity:.86;}
 .btn-main:disabled{opacity:.2;cursor:not-allowed;}
+.fixed-action{position:fixed;left:0;right:0;bottom:0;z-index:100;background:rgba(247,247,244,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--bdr);box-shadow:0 -6px 18px rgba(20,20,15,.06);}
+.fixed-action-inner{max-width:700px;margin:0 auto;padding:12px 22px;}
+.fixed-action .btn-main{margin-top:0;}
 /* Progress */
 .prog-card{display:none;}.prog-card.show{display:block;}
 .pct-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:12px;}
@@ -155,6 +166,14 @@ header{text-align:center;margin-bottom:46px;}
     <div class="logo-sub">200 MB / 文字数上限で分割 · 結合→分割対応 · ローカル処理</div>
   </header>
 
+  <div class="mini-prog" id="miniProg">
+    <div class="mini-prog-top">
+      <span id="miniProgLbl">処理中...</span>
+      <span class="mini-prog-pct" id="miniProgPct">0%</span>
+    </div>
+    <div class="mini-prog-bar"><div class="mini-prog-fill" id="miniProgFill"></div></div>
+  </div>
+
   <div class="card">
     <div class="cb">
       <div class="lbl">モード選択</div>
@@ -201,7 +220,6 @@ header{text-align:center;margin-bottom:46px;}
         <span>出力ファイル名プレビュー</span>
         <div class="ntags" id="ntags"></div>
       </div>
-      <button class="btn-main" id="goBtn" disabled>結合してから 200 MB 以下に分割する</button>
       <div class="lbl" id="fqLabel" style="margin-top:20px;display:none;">読み込み済みファイル</div>
       <div class="fqueue" id="fqueue"></div>
     </div>
@@ -243,6 +261,12 @@ header{text-align:center;margin-bottom:46px;}
       </div>
       <div class="pgrid" id="pgrid"></div>
     </div>
+  </div>
+</div>
+
+<div class="fixed-action" id="fixedAction">
+  <div class="fixed-action-inner">
+    <button class="btn-main" id="goBtn" disabled>結合してから 200 MB 以下に分割する</button>
   </div>
 </div>
 
@@ -295,6 +319,8 @@ const fqueue=$('fqueue'),statsRow=$('statsRow'),statPages=$('statPages'),statSiz
 const charLimitEnable=$('charLimitEnable'),charLimitValEl=$('charLimitVal');
 const nprev=$('nprev'),ntags=$('ntags'),goBtn=$('goBtn');
 const progCard=$('progCard'),pctBig=$('pctBig'),pctLbl=$('pctLbl'),pctPts=$('pctPts');
+const miniProg=$('miniProg'),miniProgFill=$('miniProgFill'),miniProgPct=$('miniProgPct'),miniProgLbl=$('miniProgLbl');
+miniProg.addEventListener('click',()=>progCard.scrollIntoView({behavior:'smooth',block:'start'}));
 const segbar=$('segbar'),segL=$('segL'),segR=$('segR');
 const doneBn=$('doneBn'),doneS=$('doneS'),logbox=$('logbox');
 const partsPanel=$('partsPanel'),pgrid=$('pgrid');
@@ -310,6 +336,17 @@ function yield_(){return new Promise(r=>setTimeout(r,0));}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function pctHtml(n){return n+'<span style="font-size:.42em;opacity:.4;">%</span>';}
 function fmtC(n){return n.toLocaleString('ja-JP')+' 字';}
+function setPct(n,done){
+  pctBig.innerHTML=pctHtml(n);
+  pctBig.classList.toggle('done',!!done);
+  miniProgFill.style.width=n+'%';
+  miniProgFill.classList.toggle('done',!!done);
+  miniProgPct.textContent=n+'%';
+}
+function setLbl(txt){
+  pctLbl.textContent=txt;
+  miniProgLbl.textContent=txt;
+}
 
 function log(msg,cls){
   const d=document.createElement('div');d.className='ll';
@@ -504,15 +541,16 @@ async function doSplit(){
 
   busy=true;goBtn.disabled=true;fi.disabled=true;chunks=[];
   progCard.classList.add('show');doneBn.classList.remove('show');
-  partsPanel.classList.remove('show');pctBig.classList.remove('done');
-  pctBig.innerHTML=pctHtml(0);
+  partsPanel.classList.remove('show');
+  miniProg.classList.add('show');
+  setPct(0,false);
 
   t0=Date.now();
   ticker=setInterval(()=>{segR.textContent='経過: '+fmtT(Date.now()-t0);},400);
 
   try{
     /* ── Step 1: build source document ── */
-    pctLbl.textContent='PDFを解析中...';pctPts.textContent='';
+    setLbl('PDFを解析中...');pctPts.textContent='';
     await yield_();
     log('━━━ 開始 ━━━','info');
 
@@ -529,7 +567,7 @@ async function doSplit(){
       log('結合: '+ready.length+' ファイル','info');
       srcDoc=await PDFLib.PDFDocument.create();
       for(const entry of ready){
-        pctLbl.textContent=entry.name+' を結合中...';
+        setLbl(entry.name+' を結合中...');
         await yield_();
         const sub=await PDFLib.PDFDocument.load(entry.bytes.buffer,{updateMetadata:false});
         const idxs=Array.from({length:sub.getPageCount()},(_,i)=>i);
@@ -559,7 +597,7 @@ async function doSplit(){
     const estPartsChar=(enableChar&&limitChar>0)?Math.max(1,Math.ceil(totalRawChars/limitChar)):1;
     const estParts=Math.max(estPartsSize,estPartsChar);
     buildSegbar(estParts+2);
-    pctLbl.textContent='分割中...';
+    setLbl('分割中...');
     if(enableChar)log('文字数上限: '+fmtC(limitChar)+' / パーツを適用','info');
 
     /* ── Step 2: binary-search split ── */
@@ -598,7 +636,7 @@ async function doSplit(){
         segDone(partNum-1);
         log('パーツ'+partNum+': p.'+(cursor+1)+' (1p · '+fmt(blob.size)+' · '+fmtC(cc1)+')','ok');
         cursor++;
-        pctBig.innerHTML=pctHtml(100);
+        setPct(100,false);
         break;
       }
 
@@ -637,7 +675,7 @@ async function doSplit(){
       // Binary search in [lo, hi]
       while(lo<=hi){
         const mid=Math.floor((lo+hi)/2);
-        pctLbl.textContent='パーツ '+partNum+': '+mid+'p をテスト中...';
+        setLbl('パーツ '+partNum+': '+mid+'p をテスト中...');
         await yield_();
         const{bytes:b}=await trySlice(cursor,mid);
         if(fits(b.byteLength,cumChars(cursor,mid))){
@@ -666,7 +704,7 @@ async function doSplit(){
 
       cursor+=bestCount;
       const pct=Math.round(cursor/totalPages*100);
-      pctBig.innerHTML=pctHtml(pct);
+      setPct(pct,false);
       pctPts.textContent=cursor+' / '+totalPages+' ページ完了';
       segL.textContent=partNum+' パーツ生成済';
       await yield_();
@@ -684,8 +722,8 @@ async function doSplit(){
   /* ── Finalise ── */
   clearInterval(ticker);
   const elapsed=fmtT(Date.now()-t0);
-  pctBig.innerHTML=pctHtml(100);pctBig.classList.add('done');
-  pctLbl.textContent='完了';
+  setPct(100,true);
+  setLbl('完了');
   pctPts.textContent=chunks.reduce((s,c)=>s+(c.pgEnd-c.pgStart+1),0)+' ページ完了';
   segAllDone();
   doneBn.classList.add('show');
