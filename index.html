@@ -9,9 +9,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{
-  --bg:#0f0f0f;--sur:#171717;--bdr:#252525;--bdr2:#333;
-  --tx:#e8e8e8;--sub:#666;--mt:#3a3a3a;
-  --ok:#6fcf97;--ng:#eb5757;--wn:#f2c94c;
+  --bg:#f7f7f4;--sur:#ffffff;--bdr:#e3e2dc;--bdr2:#c9c8c0;
+  --tx:#1c1c1a;--sub:#767469;--mt:#c9c8c0;
+  --ok:#1f8a52;--ng:#c93f3f;--wn:#9c6f00;
   --mono:'DM Mono',monospace;--serif:'Cormorant Garamond',serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -22,17 +22,28 @@ header{text-align:center;margin-bottom:46px;}
 .logo{font-family:var(--serif);font-size:48px;font-weight:300;letter-spacing:.1em;line-height:1;margin-bottom:8px;}
 .logo strong{font-weight:700;}
 .logo-sub{font-size:10px;letter-spacing:.3em;color:var(--sub);text-transform:uppercase;}
-.card{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;margin-bottom:12px;position:relative;overflow:hidden;}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);}
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;margin-bottom:12px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(20,20,15,.04);}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.05),transparent);}
 .cb{padding:24px;}
 .lbl{font-size:9px;letter-spacing:.26em;color:var(--sub);text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:9px;}
 .lbl::after{content:'';flex:1;height:1px;background:var(--bdr);}
 .mode-row{display:flex;gap:8px;margin-bottom:18px;}
 .mode-btn{flex:1;padding:9px;background:var(--bg);border:1px solid var(--bdr2);border-radius:2px;color:var(--sub);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;text-align:center;}
-.mode-btn.active{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.22);color:var(--tx);}
+.mode-btn.active{background:var(--tx);border-color:var(--tx);color:var(--bg);}
+.limit-set{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.limit-item{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:2px;flex-wrap:wrap;}
+.limit-name{font-size:11px;color:var(--tx);flex-shrink:0;}
+.limit-fixed{font-size:11px;color:var(--sub);margin-left:auto;}
+.limit-cba{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--tx);cursor:pointer;flex-shrink:0;}
+.limit-cba input{cursor:pointer;accent-color:var(--tx);width:13px;height:13px;}
+.limit-num{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.limit-num input{width:90px;background:var(--sur);border:1px solid var(--bdr2);border-radius:2px;color:var(--tx);font-family:var(--mono);font-size:11px;padding:5px 7px;text-align:right;}
+.limit-num input:disabled{opacity:.3;}
+.limit-unit{font-size:10px;color:var(--sub);white-space:nowrap;}
+.limit-hint{font-size:10px;color:var(--sub);padding:0 2px;line-height:1.6;}
 .dz{border:1px solid var(--bdr2);border-radius:2px;padding:32px 20px;text-align:center;cursor:pointer;position:relative;transition:border-color .2s,background .2s;}
 .dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.dz:hover,.dz.ov{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.015);}
+.dz:hover,.dz.ov{border-color:rgba(0,0,0,.32);background:rgba(0,0,0,.015);}
 .dz-icon{width:42px;height:42px;border:1px solid var(--bdr2);border-radius:2px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--sub);background:var(--bg);}
 .dz-t1{font-family:var(--serif);font-size:17px;letter-spacing:.04em;margin-bottom:4px;}
 .dz-t2{font-size:11px;color:var(--sub);}
@@ -49,7 +60,7 @@ header{text-align:center;margin-bottom:46px;}
 .fq-st{font-size:10px;flex-shrink:0;}.fq-st.ok{color:var(--ok);}.fq-st.err{color:var(--ng);}.fq-st.ld{color:var(--sub);}
 .fq-rm{padding:2px 7px;background:transparent;border:1px solid var(--bdr);border-radius:2px;color:var(--sub);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;}
 .fq-rm:hover{border-color:var(--ng);color:var(--ng);}
-.stats-row{display:none;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.stats-row{display:none;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px;}
 .stats-row.show{display:grid;}
 .stat-cell{background:var(--bg);border:1px solid var(--bdr);border-radius:2px;padding:10px 12px;}
 .stat-l{font-size:9px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
@@ -70,9 +81,9 @@ header{text-align:center;margin-bottom:46px;}
 .pct-lbl{font-size:11px;color:var(--sub);margin-bottom:3px;}
 .pct-pts{font-size:12px;color:var(--tx);}
 .segbar{width:100%;height:26px;display:flex;gap:2px;margin-bottom:7px;}
-.seg{flex:1;background:rgba(255,255,255,.05);border-radius:1px;position:relative;overflow:hidden;transition:background .3s;}
-.seg.act{background:rgba(255,255,255,.18);}
-.seg.act::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:sh 1s ease-in-out infinite;}
+.seg{flex:1;background:rgba(0,0,0,.055);border-radius:1px;position:relative;overflow:hidden;transition:background .3s;}
+.seg.act{background:rgba(0,0,0,.2);}
+.seg.act::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,0,0,.28),transparent);animation:sh 1s ease-in-out infinite;}
 @keyframes sh{0%,100%{opacity:0}50%{opacity:1}}
 .seg.done{background:var(--ok);}
 .seg-ft{display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-bottom:14px;}
@@ -95,14 +106,14 @@ header{text-align:center;margin-bottom:46px;}
 .cba-lbl{font-size:11px;color:var(--sub);}
 .sel-ct{font-size:11px;color:var(--sub);}
 .btn-dls{padding:6px 13px;background:transparent;border:1px solid var(--bdr2);border-radius:2px;color:var(--tx);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;}
-.btn-dls:hover{border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.025);}
+.btn-dls:hover{border-color:rgba(0,0,0,.4);background:rgba(0,0,0,.03);}
 .btn-dls:disabled{opacity:.3;cursor:not-allowed;}
 .pgrid{display:flex;flex-direction:column;gap:5px;max-height:400px;overflow-y:auto;padding-right:3px;}
 .pgrid::-webkit-scrollbar{width:3px;}
 .pgrid::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
 .prow{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:2px;transition:border-color .15s;}
 .prow:hover{border-color:var(--bdr2);}
-.prow.sel{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.012);}
+.prow.sel{border-color:rgba(0,0,0,.22);background:rgba(0,0,0,.02);}
 .pcb{cursor:pointer;accent-color:var(--tx);width:13px;height:13px;flex-shrink:0;}
 .pnum{font-size:10px;color:var(--sub);width:20px;text-align:right;flex-shrink:0;}
 .pthumb{width:32px;height:40px;background:var(--sur);border:1px solid var(--bdr);border-radius:1px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;font-size:9px;color:var(--sub);}
@@ -110,15 +121,17 @@ header{text-align:center;margin-bottom:46px;}
 .pspin{animation:blink 1s ease infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .pinfo{flex:1;min-width:0;}
-.pname{font-size:12px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pname-input{font-size:12px;color:var(--tx);font-family:var(--mono);background:transparent;border:none;border-bottom:1px dashed transparent;width:100%;padding:1px 0 2px;outline:none;}
+.pname-input:hover{border-bottom-color:var(--bdr2);}
+.pname-input:focus{border-bottom-color:var(--tx);background:rgba(0,0,0,.02);}
 .pmeta{font-size:10px;color:var(--sub);margin-top:2px;}
 .pacts{display:flex;gap:4px;flex-shrink:0;}
 .ba{padding:3px 8px;border:1px solid var(--bdr);border-radius:2px;background:transparent;color:var(--sub);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .ba:hover{border-color:var(--bdr2);color:var(--tx);}
 /* Modal */
-.modal-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.9);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;}
+.modal-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(20,20,15,.45);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;}
 .modal-bg.show{display:flex;}
-.modal{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;width:100%;max-width:640px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.8);}
+.modal{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;width:100%;max-width:640px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(20,20,15,.22);}
 .mhead{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--bdr);flex-shrink:0;}
 .mtitle{font-size:11px;color:var(--sub);}
 .mclose{padding:3px 8px;background:transparent;border:1px solid var(--bdr2);border-radius:2px;color:var(--sub);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;}
@@ -129,7 +142,7 @@ header{text-align:center;margin-bottom:46px;}
 .prev-cv{max-width:100%;border:1px solid var(--bdr);background:#fff;}
 .prev-nav{display:flex;align-items:center;gap:9px;margin-top:11px;font-size:11px;color:var(--sub);}
 .prev-nav button{padding:4px 10px;background:transparent;border:1px solid var(--bdr2);border-radius:2px;color:var(--sub);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;}
-.prev-nav button:hover{border-color:rgba(255,255,255,.28);color:var(--tx);}
+.prev-nav button:hover{border-color:rgba(0,0,0,.35);color:var(--tx);}
 .prev-nav button:disabled{opacity:.3;cursor:not-allowed;}
 .pmrow{width:100%;display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;font-size:10px;}
 .pmrow span{padding:2px 7px;border:1px solid var(--bdr);border-radius:2px;color:var(--sub);}
@@ -139,38 +152,58 @@ header{text-align:center;margin-bottom:46px;}
 <div class="shell">
   <header>
     <div class="logo">PDF <strong>Splitter</strong></div>
-    <div class="logo-sub">200 MB 以下に分割 · 結合→分割対応 · ローカル処理</div>
+    <div class="logo-sub">200 MB / 文字数上限で分割 · 結合→分割対応 · ローカル処理</div>
   </header>
 
   <div class="card">
     <div class="cb">
       <div class="lbl">モード選択</div>
       <div class="mode-row">
-        <button class="mode-btn active" id="modeSplit">分割のみ</button>
-        <button class="mode-btn" id="modeMerge">複数PDFを結合してから分割</button>
+        <button class="mode-btn active" id="modeMerge">複数PDFを結合してから分割</button>
+        <button class="mode-btn" id="modeSplit">1つのPDFを分割のみ</button>
       </div>
-      <div class="lbl" id="dzLabel">PDFファイルを選択</div>
+      <div class="lbl">分割の上限設定</div>
+      <div class="limit-set">
+        <div class="limit-item">
+          <span class="limit-name">サイズ上限</span>
+          <span class="limit-fixed">200 MB / パーツ（固定）</span>
+        </div>
+        <div class="limit-item">
+          <label class="limit-cba" for="charLimitEnable">
+            <input type="checkbox" id="charLimitEnable" checked>
+            文字数上限も適用
+          </label>
+          <div class="limit-num">
+            <input type="number" id="charLimitVal" value="450000" min="1000" step="10000">
+            <span class="limit-unit">字 / パーツ</span>
+          </div>
+        </div>
+      </div>
+      <div class="limit-hint" id="limitHint">サイズ・文字数のどちらか一方でも上限に達した時点でパーツを区切ります（NotebookLM の1ソースあたりの文字数上限対策）。</div>
+      <div class="lbl" id="dzLabel" style="margin-top:16px;">PDFファイルを選択</div>
       <div class="dz" id="dz">
-        <input type="file" id="fi" accept=".pdf,application/pdf">
+        <input type="file" id="fi" accept=".pdf,application/pdf" multiple>
         <div class="dz-icon">PDF</div>
-        <div class="dz-t1" id="dzT1">ドロップ、またはクリックして選択</div>
-        <div class="dz-t2" id="dzT2">PDFファイルのみ · ブラウザ内処理</div>
+        <div class="dz-t1" id="dzT1">複数のPDFをドロップ、またはクリックして選択</div>
+        <div class="dz-t2" id="dzT2">複数ファイル選択可 · 上から順に結合 · ブラウザ内処理</div>
       </div>
       <div class="spin-row" id="spinRow">
         <div class="spinner"></div>
         <span id="spinMsg">読み込み中...</span>
       </div>
-      <div class="fqueue" id="fqueue"></div>
       <div class="stats-row" id="statsRow">
         <div class="stat-cell"><div class="stat-l">総ページ数</div><div class="stat-v" id="statPages">—</div></div>
         <div class="stat-cell"><div class="stat-l">合計サイズ</div><div class="stat-v" id="statSize">—</div></div>
+        <div class="stat-cell"><div class="stat-l">総文字数</div><div class="stat-v" id="statChars">—</div></div>
         <div class="stat-cell"><div class="stat-l">分割数（予測）</div><div class="stat-v" id="statParts">—</div></div>
       </div>
       <div class="nprev" id="nprev">
         <span>出力ファイル名プレビュー</span>
         <div class="ntags" id="ntags"></div>
       </div>
-      <button class="btn-main" id="goBtn" disabled>200 MB 以下に分割する</button>
+      <button class="btn-main" id="goBtn" disabled>結合してから 200 MB 以下に分割する</button>
+      <div class="lbl" id="fqLabel" style="margin-top:20px;display:none;">読み込み済みファイル</div>
+      <div class="fqueue" id="fqueue"></div>
     </div>
   </div>
 
@@ -250,13 +283,16 @@ const LIMIT = 200 * 1024 * 1024; // 200 MiB
 const $ = id => document.getElementById(id);
 
 let mode = 'split';
-let queue = [];   // {name, bytes:Uint8Array, pages, size, ok, loading, error}
+let queue = [];   // {name, bytes:Uint8Array, pages, size, ok, loading, error, charPerPage, totalChars}
 let chunks = [];  // output
 let busy = false;
 let t0 = null, ticker = null;
+let charLimitEnabled = true;
+let charLimitVal = 450000;
 
 const dz=$('dz'),fi=$('fi'),spinRow=$('spinRow'),spinMsg=$('spinMsg');
-const fqueue=$('fqueue'),statsRow=$('statsRow'),statPages=$('statPages'),statSize=$('statSize'),statParts=$('statParts');
+const fqueue=$('fqueue'),statsRow=$('statsRow'),statPages=$('statPages'),statSize=$('statSize'),statChars=$('statChars'),statParts=$('statParts');
+const charLimitEnable=$('charLimitEnable'),charLimitValEl=$('charLimitVal');
 const nprev=$('nprev'),ntags=$('ntags'),goBtn=$('goBtn');
 const progCard=$('progCard'),pctBig=$('pctBig'),pctLbl=$('pctLbl'),pctPts=$('pctPts');
 const segbar=$('segbar'),segL=$('segL'),segR=$('segR');
@@ -273,6 +309,7 @@ function pad(n,w){return String(n).padStart(w,'0');}
 function yield_(){return new Promise(r=>setTimeout(r,0));}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function pctHtml(n){return n+'<span style="font-size:.42em;opacity:.4;">%</span>';}
+function fmtC(n){return n.toLocaleString('ja-JP')+' 字';}
 
 function log(msg,cls){
   const d=document.createElement('div');d.className='ll';
@@ -286,6 +323,19 @@ function makePartName(base,num,digits){
   return base.slice(0,dot)+'_'+pad(num,digits)+base.slice(dot);
 }
 
+/* ── Char limit controls ── */
+charLimitEnable.addEventListener('change',()=>{
+  charLimitEnabled=charLimitEnable.checked;
+  charLimitValEl.disabled=!charLimitEnabled;
+  updateStats();
+});
+charLimitValEl.addEventListener('input',()=>{
+  const v=parseInt(charLimitValEl.value,10);
+  charLimitVal=(Number.isFinite(v)&&v>0)?v:charLimitVal;
+  updateStats();
+});
+charLimitValEl.disabled=!charLimitEnabled;
+
 /* ── Mode toggle ── */
 $('modeSplit').addEventListener('click',()=>setMode('split'));
 $('modeMerge').addEventListener('click',()=>setMode('merge'));
@@ -294,11 +344,12 @@ function setMode(m){
   $('modeSplit').classList.toggle('active',m==='split');
   $('modeMerge').classList.toggle('active',m==='merge');
   fi.multiple=(m==='merge');
-  $('dzT1').textContent=m==='merge'?'複数のPDFをドロップ、またはクリックして選択':'ドロップ、またはクリックして選択';
-  $('dzT2').textContent=m==='merge'?'複数ファイル選択可 · 上から順に結合':'PDFファイルのみ · ブラウザ内処理';
+  $('dzT1').textContent=m==='merge'?'複数のPDFをドロップ、またはクリックして選択':'1つのPDFをドロップ、またはクリックして選択';
+  $('dzT2').textContent=m==='merge'?'複数ファイル選択可 · 上から順に結合 · ブラウザ内処理':'PDFファイルのみ · ブラウザ内処理';
   goBtn.textContent=m==='merge'?'結合してから 200 MB 以下に分割する':'200 MB 以下に分割する';
   queue=[];renderQueue();updateStats();
 }
+setMode('merge');
 
 /* ── File input ── */
 fi.addEventListener('change',e=>{
@@ -320,6 +371,24 @@ async function handleFiles(files){
   else{for(const f of files)await loadOne(f);}
 }
 
+/* Extract per-page character counts via pdf.js (needed for char-limit splitting) */
+async function countCharsPerPage(bytes,onProgress){
+  const doc=await pdfjsLib.getDocument({data:bytes.slice(0)}).promise;
+  const counts=[];
+  for(let i=1;i<=doc.numPages;i++){
+    try{
+      const page=await doc.getPage(i);
+      const content=await page.getTextContent();
+      let len=0;
+      for(const it of content.items)if(it.str)len+=it.str.length;
+      counts.push(len);
+    }catch{counts.push(0);}
+    if(onProgress&&i%10===0){onProgress(i,doc.numPages);await yield_();}
+  }
+  if(onProgress)onProgress(doc.numPages,doc.numPages);
+  return counts;
+}
+
 async function loadOne(file){
   if(!file.name.toLowerCase().endsWith('.pdf')){log(file.name+' はPDFではありません','err');return;}
   const entry={name:file.name,bytes:null,pages:0,size:file.size,ok:false,loading:true};
@@ -337,6 +406,19 @@ async function loadOne(file){
     const doc=await PDFLib.PDFDocument.load(ab,{updateMetadata:false,parseSpeed:PDFLib.ParseSpeeds?.Fastest});
     entry.bytes=u8;entry.pages=doc.getPageCount();entry.ok=true;entry.loading=false;
     log(file.name+': '+entry.pages+'p · '+fmt(file.size),'ok');
+    // Extract per-page character counts (used for character-limit splitting)
+    spinMsg.textContent=file.name+' の文字数を解析中... (0/'+entry.pages+')';
+    spinRow.classList.add('show');
+    await yield_();
+    try{
+      entry.charPerPage=await countCharsPerPage(u8,(i,n)=>{spinMsg.textContent=file.name+' の文字数を解析中... ('+i+'/'+n+')';});
+      entry.totalChars=entry.charPerPage.reduce((s,n)=>s+n,0);
+      log(file.name+': '+fmtC(entry.totalChars)+' を検出','info');
+    }catch(e){
+      entry.charPerPage=new Array(entry.pages).fill(0);
+      entry.totalChars=0;
+      log(file.name+' の文字数解析に失敗（サイズ上限のみ適用されます）: '+e.message,'wn');
+    }
   }catch(e){
     entry.ok=false;entry.loading=false;entry.error=e.message;
     log(file.name+' エラー: '+e.message,'err');
@@ -347,11 +429,12 @@ async function loadOne(file){
 
 function renderQueue(){
   fqueue.innerHTML='';
+  $('fqLabel').style.display=queue.length?'flex':'none';
   queue.forEach((e,i)=>{
     const row=document.createElement('div');row.className='fq-row';
     row.innerHTML='<div class="fq-pdf">PDF</div>'
       +'<div class="fq-info"><div class="fq-name">'+esc(e.name)+'</div>'
-      +'<div class="fq-meta">'+fmt(e.size)+(e.ok?' · '+e.pages+'p':'')+'</div></div>'
+      +'<div class="fq-meta">'+fmt(e.size)+(e.ok?' · '+e.pages+'p · '+fmtC(e.totalChars||0):'')+'</div></div>'
       +'<span class="fq-st '+(e.loading?'ld':e.ok?'ok':'err')+'">'+(e.loading?'読込中':e.ok?'✓':e.error||'エラー')+'</span>'
       +(mode==='merge'?'<button class="fq-rm" data-i="'+i+'">✕</button>':'');
     fqueue.appendChild(row);
@@ -366,8 +449,12 @@ function updateStats(){
   if(!ready.length){statsRow.classList.remove('show');nprev.classList.remove('show');goBtn.disabled=true;return;}
   const totalP=ready.reduce((s,e)=>s+e.pages,0);
   const totalB=ready.reduce((s,e)=>s+e.bytes.byteLength,0);
-  const estParts=Math.max(1,Math.ceil(totalB/LIMIT));
-  statPages.textContent=totalP+' p';statSize.textContent=fmt(totalB);statParts.textContent='約 '+estParts+' 個';
+  const totalC=ready.reduce((s,e)=>s+(e.totalChars||0),0);
+  const estPartsSize=Math.max(1,Math.ceil(totalB/LIMIT));
+  const estPartsChar=(charLimitEnabled&&charLimitVal>0)?Math.max(1,Math.ceil(totalC/charLimitVal)):1;
+  const estParts=Math.max(estPartsSize,estPartsChar);
+  statPages.textContent=totalP+' p';statSize.textContent=fmt(totalB);
+  statChars.textContent=fmtC(totalC);statParts.textContent='約 '+estParts+' 個';
   statsRow.classList.add('show');
   const base=mode==='merge'?'merged_output.pdf':(ready[0].name);
   const digits=String(estParts+1).length;
@@ -431,7 +518,12 @@ async function doSplit(){
 
     let srcDoc;
     let totalPages=0;
+    let charPerPage=[]; // page-indexed char counts, in the same order as srcDoc pages
     const baseName=mode==='merge'?'merged_output.pdf':ready[0].name;
+
+    // Freeze the char-limit settings for the duration of this run
+    const enableChar=charLimitEnabled;
+    const limitChar=charLimitVal;
 
     if(mode==='merge'&&ready.length>1){
       log('結合: '+ready.length+' ファイル','info');
@@ -443,6 +535,7 @@ async function doSplit(){
         const idxs=Array.from({length:sub.getPageCount()},(_,i)=>i);
         const copied=await srcDoc.copyPages(sub,idxs);
         copied.forEach(p=>srcDoc.addPage(p));
+        charPerPage=charPerPage.concat(entry.charPerPage||new Array(entry.pages).fill(0));
         log('結合: '+entry.name+' ('+entry.pages+'p)','info');
       }
       totalPages=srcDoc.getPageCount();
@@ -450,13 +543,24 @@ async function doSplit(){
     }else{
       srcDoc=await PDFLib.PDFDocument.load(ready[0].bytes.buffer,{updateMetadata:false});
       totalPages=srcDoc.getPageCount();
+      charPerPage=(ready[0].charPerPage||new Array(totalPages).fill(0)).slice();
       log(ready[0].name+': '+totalPages+'p','info');
     }
 
+    // Prefix sums for O(1) cumulative character-count lookups
+    const prefixChars=new Array(totalPages+1).fill(0);
+    for(let i=0;i<totalPages;i++)prefixChars[i+1]=prefixChars[i]+(charPerPage[i]||0);
+    const cumChars=(from,count)=>prefixChars[from+count]-prefixChars[from];
+    const fits=(byteLen,charCnt)=>byteLen<LIMIT&&(!enableChar||charCnt<=limitChar);
+
     const totalRawBytes=ready.reduce((s,e)=>s+e.bytes.byteLength,0);
-    const estParts=Math.max(1,Math.ceil(totalRawBytes/LIMIT));
+    const totalRawChars=prefixChars[totalPages];
+    const estPartsSize=Math.max(1,Math.ceil(totalRawBytes/LIMIT));
+    const estPartsChar=(enableChar&&limitChar>0)?Math.max(1,Math.ceil(totalRawChars/limitChar)):1;
+    const estParts=Math.max(estPartsSize,estPartsChar);
     buildSegbar(estParts+2);
     pctLbl.textContent='分割中...';
+    if(enableChar)log('文字数上限: '+fmtC(limitChar)+' / パーツを適用','info');
 
     /* ── Step 2: binary-search split ── */
     let cursor=0;       // next 0-based page index to process
@@ -487,23 +591,26 @@ async function doSplit(){
       if(remaining===1){
         const{bytes}=await trySlice(cursor,1);
         const blob=new Blob([bytes],{type:'application/pdf'});
+        const cc1=cumChars(cursor,1);
         if(bytes.byteLength>=LIMIT)log('⚠ p.'+(cursor+1)+' 単体 '+fmt(bytes.byteLength)+' — 1ページが200MB超','wn');
-        chunks.push({blob,bytes,pgStart:cursor+1,pgEnd:cursor+1,name:''});
+        if(enableChar&&cc1>limitChar)log('⚠ p.'+(cursor+1)+' 単体 '+fmtC(cc1)+' — 1ページが文字数上限超','wn');
+        chunks.push({blob,bytes,pgStart:cursor+1,pgEnd:cursor+1,name:'',charCount:cc1});
         segDone(partNum-1);
-        log('パーツ'+partNum+': p.'+(cursor+1)+' (1p · '+fmt(blob.size)+')','ok');
+        log('パーツ'+partNum+': p.'+(cursor+1)+' (1p · '+fmt(blob.size)+' · '+fmtC(cc1)+')','ok');
         cursor++;
         pctBig.innerHTML=pctHtml(100);
         break;
       }
 
-      /* Binary search for the maximum page count that fits in LIMIT */
+      /* Binary search for the maximum page count that fits within
+         BOTH the size limit and the character limit (if enabled) */
       let lo=1, hi=Math.min(remaining, estPages*2); // generous hi
       let bestCount=0, bestBytes=null;
 
       // First, try hi directly — often it fits and we skip the search
       {
         const{bytes:b}=await trySlice(cursor,hi);
-        if(b.byteLength<LIMIT){
+        if(fits(b.byteLength,cumChars(cursor,hi))){
           // hi fits — if that's all remaining pages, done
           if(hi===remaining){
             bestCount=hi;bestBytes=b;lo=hi+1;// exit loop
@@ -513,7 +620,7 @@ async function doSplit(){
             const hi2=Math.min(remaining,hi*2);
             if(hi2>hi){
               const{bytes:b2}=await trySlice(cursor,hi2);
-              if(b2.byteLength<LIMIT){bestCount=hi2;bestBytes=b2;hi=hi2;}
+              if(fits(b2.byteLength,cumChars(cursor,hi2))){bestCount=hi2;bestBytes=b2;hi=hi2;}
               else{bestCount=hi;bestBytes=b;hi=hi2;}
             }else{bestCount=hi;bestBytes=b;}
             lo=bestCount+1; // binary search from bestCount+1 upward? No: we have a good bestCount; do descending search
@@ -533,7 +640,7 @@ async function doSplit(){
         pctLbl.textContent='パーツ '+partNum+': '+mid+'p をテスト中...';
         await yield_();
         const{bytes:b}=await trySlice(cursor,mid);
-        if(b.byteLength<LIMIT){
+        if(fits(b.byteLength,cumChars(cursor,mid))){
           if(mid>bestCount){bestCount=mid;bestBytes=b;}
           lo=mid+1;
         }else{
@@ -541,18 +648,21 @@ async function doSplit(){
         }
       }
 
-      // bestCount=0 means even 1 page exceeds limit
+      // bestCount=0 means even 1 page exceeds one of the limits
       if(bestCount===0){
         // Accept 1 page with warning
         const{bytes:b}=await trySlice(cursor,1);
         bestCount=1;bestBytes=b;
-        log('⚠ p.'+(cursor+1)+' 単体 '+fmt(b.byteLength)+' — 1ページが200MB超（分割不能）','wn');
+        const cc=cumChars(cursor,1);
+        if(b.byteLength>=LIMIT)log('⚠ p.'+(cursor+1)+' 単体 '+fmt(b.byteLength)+' — 1ページが200MB超（分割不能）','wn');
+        if(enableChar&&cc>limitChar)log('⚠ p.'+(cursor+1)+' 単体 '+fmtC(cc)+' — 1ページが文字数上限超（分割不能）','wn');
       }
 
+      const bestChars=cumChars(cursor,bestCount);
       const blob=new Blob([bestBytes],{type:'application/pdf'});
-      chunks.push({blob,bytes:bestBytes,pgStart:cursor+1,pgEnd:cursor+bestCount,name:''});
+      chunks.push({blob,bytes:bestBytes,pgStart:cursor+1,pgEnd:cursor+bestCount,name:'',charCount:bestChars});
       segDone(partNum-1);
-      log('パーツ'+partNum+': p.'+(cursor+1)+'–'+(cursor+bestCount)+' ('+bestCount+'p · '+fmt(blob.size)+')','ok');
+      log('パーツ'+partNum+': p.'+(cursor+1)+'–'+(cursor+bestCount)+' ('+bestCount+'p · '+fmt(blob.size)+' · '+fmtC(bestChars)+')','ok');
 
       cursor+=bestCount;
       const pct=Math.round(cursor/totalPages*100);
@@ -564,7 +674,7 @@ async function doSplit(){
 
     /* Rename with final digit width */
     const digits=String(chunks.length).length;
-    chunks.forEach((c,i)=>{c.name=makePartName(baseName,i+1,digits);});
+    chunks.forEach((c,i)=>{c.name=c.origName=makePartName(baseName,i+1,digits);});
 
   }catch(e){
     log('エラー: '+e.message,'err');
@@ -579,12 +689,18 @@ async function doSplit(){
   pctPts.textContent=chunks.reduce((s,c)=>s+(c.pgEnd-c.pgStart+1),0)+' ページ完了';
   segAllDone();
   doneBn.classList.add('show');
-  doneS.textContent=chunks.length+' パーツ · '+elapsed;
+  doneS.textContent=chunks.length+' パーツ · '+elapsed+(charLimitEnabled?' · 文字数上限 '+fmtC(charLimitVal)+' 適用':'');
   log('━━━ 完了: '+chunks.length+' パーツ ('+elapsed+') ━━━','ok');
 
   const over=chunks.filter(c=>c.blob.size>=LIMIT);
   if(over.length===0)log('✓ 全パーツ 200 MB 未満','ok');
   else over.forEach(c=>log('⚠ '+c.name+': '+fmt(c.blob.size)+' （1ページが超大）','wn'));
+
+  if(charLimitEnabled){
+    const overC=chunks.filter(c=>(c.charCount||0)>charLimitVal);
+    if(overC.length===0)log('✓ 全パーツ 文字数上限（'+fmtC(charLimitVal)+'）未満','ok');
+    else overC.forEach(c=>log('⚠ '+c.name+': '+fmtC(c.charCount)+' （1ページが超大で文字数上限を超過）','wn'));
+  }
 
   renderParts();
   partsPanel.classList.add('show');
@@ -603,8 +719,17 @@ function renderParts(){
     const th=document.createElement('div');th.className='pthumb';th.innerHTML='<span class="pspin">…</span>';
     const pgc=c.pgEnd-c.pgStart+1;
     const info=document.createElement('div');info.className='pinfo';
-    info.innerHTML='<div class="pname">'+esc(c.name)+'</div>'
-      +'<div class="pmeta">p.'+c.pgStart+'–'+c.pgEnd+' · '+pgc+'p · '+fmt(c.blob.size)+'</div>';
+    const nameInput=document.createElement('input');
+    nameInput.type='text';nameInput.className='pname-input';nameInput.value=c.name;nameInput.spellcheck=false;
+    nameInput.addEventListener('input',()=>{c.name=nameInput.value;});
+    nameInput.addEventListener('blur',()=>{
+      if(!nameInput.value.trim()){nameInput.value=c.name=c.origName;}
+      if(pvIdx===i)mTitle.textContent=c.name+' ('+pvMax+'p)';
+    });
+    nameInput.addEventListener('click',e=>e.stopPropagation());
+    const meta=document.createElement('div');meta.className='pmeta';
+    meta.textContent='p.'+c.pgStart+'–'+c.pgEnd+' · '+pgc+'p · '+fmt(c.blob.size)+' · '+fmtC(c.charCount||0);
+    info.appendChild(nameInput);info.appendChild(meta);
     const acts=document.createElement('div');acts.className='pacts';
     const pb=document.createElement('button');pb.className='ba';pb.textContent='プレビュー';
     const db=document.createElement('button');db.className='ba';db.textContent='↓ DL';
@@ -645,8 +770,9 @@ btnDls.addEventListener('click',async()=>{
   btnDls.disabled=false;
 });
 function triggerDL(blob,name){
+  const safeName=/\.pdf$/i.test(name.trim())?name.trim():(name.trim()||'output')+'.pdf';
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';
+  const a=document.createElement('a');a.href=url;a.download=safeName;a.style.display='none';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
@@ -663,7 +789,7 @@ async function openPreview(idx){
 }
 async function renderPv(){
   const c=chunks[pvIdx];
-  mbody.innerHTML='<div class="pmrow"><span>'+esc(c.name)+'</span><span>'+fmt(c.blob.size)+'</span><span>p.'+c.pgStart+'–'+c.pgEnd+'</span></div>'
+  mbody.innerHTML='<div class="pmrow"><span>'+esc(c.name)+'</span><span>'+fmt(c.blob.size)+'</span><span>p.'+c.pgStart+'–'+c.pgEnd+'</span><span>'+fmtC(c.charCount||0)+'</span></div>'
     +'<div style="color:#555;font-size:12px;">レンダリング中...</div>';
   const pg=await pvDoc.getPage(pvPage);
   const sc=Math.min(560/pg.getViewport({scale:1}).width,2.2);
